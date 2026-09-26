@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* TipTap task list checkbox styling */
+ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0;
+}
+ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+ul[data-type='taskList'] li > label {
+  margin-top: 0.2rem;
+}
+ul[data-type='taskList'] li[data-checked='true'] > div > p {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+/* Remote collaborator cursor + name label (rendered by CollaborationCursor) */
+.collaboration-cursor__caret {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 1px solid;
+  border-right: 1px solid;
+  word-break: normal;
+  pointer-events: none;
+}
+.collaboration-cursor__label {
+  position: absolute;
+  top: -1.4em;
+  left: -1px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  color: white;
+  user-select: none;
+}
