@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { hasSupabaseConfig } from '@/lib/supabase/server';
 
 /**
  * Refreshes the Supabase auth session on every request so server components
@@ -8,6 +9,10 @@ import { NextResponse, type NextRequest } from 'next/server';
  */
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
+
+  if (!hasSupabaseConfig()) {
+    return response;
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

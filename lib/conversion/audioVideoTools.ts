@@ -48,7 +48,7 @@ export async function convertAudio(
   await ffmpeg.deleteFile(inputName);
   await ffmpeg.deleteFile(outputName);
 
-  return new Blob([data], { type: `audio/${targetFormat}` });
+  return new Blob([data as BlobPart], { type: `audio/${targetFormat}` });
 }
 
 /** Extracts the audio track from a video file as MP3. */
@@ -66,7 +66,7 @@ export async function extractAudioFromVideo(
   await ffmpeg.deleteFile(inputName);
   await ffmpeg.deleteFile('output.mp3');
 
-  return new Blob([data], { type: 'audio/mp3' });
+  return new Blob([data as BlobPart], { type: 'audio/mp3' });
 }
 
 /** Converts a short MP4 clip to an animated GIF. */
@@ -94,7 +94,7 @@ export async function videoToGif(
   await ffmpeg.deleteFile(inputName);
   await ffmpeg.deleteFile('output.gif');
 
-  return new Blob([data], { type: 'image/gif' });
+  return new Blob([data as BlobPart], { type: 'image/gif' });
 }
 
 /**

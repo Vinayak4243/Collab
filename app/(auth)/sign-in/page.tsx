@@ -1,10 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInForm />
+    </Suspense>
+  );
+}
+
+function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') ?? '/dashboard';
@@ -28,17 +37,27 @@ export default function SignInPage() {
       setLoading(false);
       return;
     }
+    
     router.push(redirectTo);
     router.refresh();
   }
 
   async function handleGoogleSignIn() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirectTo=${redirectTo}`,
-      },
-    });
+    try {
+      setError(null);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?redirectTo=${redirectTo}`,
+        },
+      });
+
+      if (error) {
+        setError(error.message);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'An error occurred with Google Sign In');
+    }
   }
 
   return (
@@ -47,7 +66,9 @@ export default function SignInPage() {
         <h1 className="mb-1 text-xl font-semibold text-slate-900">Welcome back</h1>
         <p className="mb-6 text-sm text-slate-500">Sign in to your workspace</p>
 
+        {/* Added type="button" to prevent accidental form submission */}
         <button
+          type="button"
           onClick={handleGoogleSignIn}
           className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >

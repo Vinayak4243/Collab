@@ -28,40 +28,40 @@ export type ConversionKind =
   | 'zip_extract'
   | 'zip_compress';
 
-export interface UserRow {
+export type UserRow = {
   id: string;
   email: string;
   full_name: string | null;
   avatar_url: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface WorkspaceRow {
+export type WorkspaceRow = {
   id: string;
   name: string;
   owner_id: string;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface WorkspaceMemberRow {
+export type WorkspaceMemberRow = {
   workspace_id: string;
   user_id: string;
   role: WorkspaceRole;
   joined_at: string;
-}
+};
 
-export interface FolderRow {
+export type FolderRow = {
   id: string;
   workspace_id: string;
   parent_id: string | null;
   name: string;
   created_by: string;
   created_at: string;
-}
+};
 
-export interface DocumentRow {
+export type DocumentRow = {
   id: string;
   workspace_id: string;
   folder_id: string | null;
@@ -75,21 +75,21 @@ export interface DocumentRow {
   created_by: string;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface TagRow {
+export type TagRow = {
   id: string;
   workspace_id: string;
   name: string;
   color: string;
-}
+};
 
-export interface DocumentTagRow {
+export type DocumentTagRow = {
   document_id: string;
   tag_id: string;
-}
+};
 
-export interface FileConversionRow {
+export type FileConversionRow = {
   id: string;
   workspace_id: string;
   requested_by: string;
@@ -101,32 +101,31 @@ export interface FileConversionRow {
   metadata: Record<string, unknown>;
   created_at: string;
   completed_at: string | null;
-}
+};
+
+type TableDefinition<Row> = {
+  Row: Row & Record<string, unknown>;
+  Insert: Partial<Row> & Record<string, unknown>;
+  Update: Partial<Row> & Record<string, unknown>;
+  Relationships: [];
+};
 
 /** Minimal Supabase Database type — extend with `Row`/`Insert`/`Update` per table as needed. */
 export interface Database {
   public: {
     Tables: {
-      users: { Row: UserRow; Insert: Partial<UserRow>; Update: Partial<UserRow> };
-      workspaces: { Row: WorkspaceRow; Insert: Partial<WorkspaceRow>; Update: Partial<WorkspaceRow> };
-      workspace_members: {
-        Row: WorkspaceMemberRow;
-        Insert: Partial<WorkspaceMemberRow>;
-        Update: Partial<WorkspaceMemberRow>;
-      };
-      folders: { Row: FolderRow; Insert: Partial<FolderRow>; Update: Partial<FolderRow> };
-      documents: { Row: DocumentRow; Insert: Partial<DocumentRow>; Update: Partial<DocumentRow> };
-      tags: { Row: TagRow; Insert: Partial<TagRow>; Update: Partial<TagRow> };
-      document_tags: {
-        Row: DocumentTagRow;
-        Insert: Partial<DocumentTagRow>;
-        Update: Partial<DocumentTagRow>;
-      };
-      file_conversions: {
-        Row: FileConversionRow;
-        Insert: Partial<FileConversionRow>;
-        Update: Partial<FileConversionRow>;
-      };
+      users: TableDefinition<UserRow>;
+      workspaces: TableDefinition<WorkspaceRow>;
+      workspace_members: TableDefinition<WorkspaceMemberRow>;
+      folders: TableDefinition<FolderRow>;
+      documents: TableDefinition<DocumentRow>;
+      tags: TableDefinition<TagRow>;
+      document_tags: TableDefinition<DocumentTagRow>;
+      file_conversions: TableDefinition<FileConversionRow>;
     };
+    Views: {};
+    Functions: {};
+    Enums: {};
+    CompositeTypes: {};
   };
 }

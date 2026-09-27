@@ -8,7 +8,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 
 // pdfjs needs its worker script; Next.js bundles it from the npm package.
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
+  'pdfjs-dist/build/pdf.worker.min.js',
   import.meta.url
 ).toString();
 
@@ -56,11 +56,11 @@ export async function imagesToPdf(files: File[]): Promise<Blob> {
   }
 
   const pdfBytes = await pdfDoc.save();
-  return new Blob([pdfBytes], { type: 'application/pdf' });
+  return new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
 }
 
 /** Renders plain text (e.g. exported Markdown/TXT note content) into a simple paginated PDF. */
-export async function textToPdf(text: string, title = 'Document'): Promise<Blob> {
+export async function textToPdf(text: string): Promise<Blob> {
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontSize = 11;
@@ -98,7 +98,7 @@ export async function textToPdf(text: string, title = 'Document'): Promise<Blob>
   }
 
   const pdfBytes = await pdfDoc.save();
-  return new Blob([pdfBytes], { type: 'application/pdf' });
+  return new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
 }
 
 /** Merges multiple PDFs into one, in the given order. */
@@ -113,5 +113,5 @@ export async function mergePdfs(files: File[]): Promise<Blob> {
   }
 
   const pdfBytes = await merged.save();
-  return new Blob([pdfBytes], { type: 'application/pdf' });
+  return new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
 }

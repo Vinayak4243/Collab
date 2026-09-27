@@ -1,18 +1,20 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, hasSupabaseConfig } from '@/lib/supabase/server';
 
 /**
  * Root route ("/"). Signed-in users are sent straight to their dashboard;
  * everyone else sees a minimal marketing/landing page.
  */
 export default async function HomePage() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (hasSupabaseConfig()) {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (user) redirect('/dashboard');
+    if (user) redirect('/dashboard');
+  }
 
   return (
     <div className="flex min-h-screen flex-col">

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import type { ConversionKind } from '@/types/database';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // heavy conversions can take a while
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get('file') as File | null;
   const workspaceId = formData.get('workspaceId') as string | null;
-  const direction = (formData.get('direction') as string | null) ?? 'docx_to_pdf'; // or 'pdf_to_docx'
+  const direction = ((formData.get('direction') as string | null) ?? 'docx_to_pdf') as ConversionKind;
 
   if (!file || !workspaceId) {
     return NextResponse.json({ error: 'file and workspaceId are required' }, { status: 400 });
