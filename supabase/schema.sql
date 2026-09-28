@@ -27,13 +27,18 @@ begin
   insert into public.users (id, email, full_name, avatar_url)
   values (
     new.id,
-    new.email,
+    coalesce(new.email, ''),
     new.raw_user_meta_data ->> 'full_name',
     new.raw_user_meta_data ->> 'avatar_url'
-  );
+  )
+  on conflict (id) do update set
+    email = excluded.email,
+    full_name = coalesce(excluded.full_name, public.users.full_name),
+    avatar_url = coalesce(excluded.avatar_url, public.users.avatar_url),
+    updated_at = now();
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public, auth;
 
 create trigger on_auth_user_created
   after insert on auth.users

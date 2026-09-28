@@ -11,8 +11,17 @@ export async function GET(request: Request) {
   const redirectTo = searchParams.get('redirectTo') ?? '/dashboard';
 
   if (code) {
-    const supabase = createClient();
-    await supabase.auth.exchangeCodeForSession(code);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) {
+        return NextResponse.redirect(`${origin}/sign-in?error=${encodeURIComponent(error.message)}`);
+      }
+    } catch (err: any) {
+      return NextResponse.redirect(
+        `${origin}/sign-in?error=${encodeURIComponent(err?.message || 'Authentication failed')}`
+      );
+    }
   }
 
   return NextResponse.redirect(`${origin}${redirectTo}`);
