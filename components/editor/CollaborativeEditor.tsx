@@ -67,10 +67,15 @@ export function CollaborativeEditor({
         Link.configure({ openOnClick: false }),
         Placeholder.configure({ placeholder: "Type '/' for commands…" }),
         Collaboration.configure({ document: ydoc }),
-        CollaborationCursor.configure({
-          provider,
-          user: presence,
-        }),
+        // Only add live cursors when Liveblocks provider is available
+        ...(provider
+          ? [
+              CollaborationCursor.configure({
+                provider,
+                user: presence,
+              }),
+            ]
+          : []),
       ],
       editorProps: {
         attributes: {
