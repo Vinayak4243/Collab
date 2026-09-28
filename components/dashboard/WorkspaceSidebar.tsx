@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Plus, LayoutGrid, AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { ensureUserProfile } from '@/app/actions/ensure-user';
+import { createWorkspaceAction } from '@/app/actions/workspace';
 
 interface WorkspaceSidebarProps {
   workspaces: { id: string; name: string }[];
@@ -59,51 +59,11 @@ export function WorkspaceSidebar({ workspaces, activeWorkspaceId }: WorkspaceSid
     setCreating(true);
     setError(null);
 
-    // Step 1: upsert the user into public.users via service-role server action
-    // (handles the case where the user signed up before the DB trigger existed)
-    const { error: profileErr } = await ensureUserProfile();
-    if (profileErr) {
-      setError(`Profile sync failed: ${profileErr}`);
-      setCreating(false);
-      return;
-    }
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setError('Not signed in.');
-      setCreating(false);
-      return;
-    }
-
-    // Step 2: create the workspace
-    const { data: workspace, error: wsError } = await supabase
-      .from('workspaces')
-      .insert({ name: 'My Workspace', owner_id: user.id })
-      .select('id')
-      .single();
-
+    const { error: wsError } = await createWorkspaceAction();
     if (wsError) {
-      console.error('createWorkspace error:', wsError);
-      setError(wsError.message);
-      setCreating(false);
-      return;
-    }
-
-    // Step 3: add self as owner member
-    if (workspace) {
-      const { error: memberError } = await supabase
-        .from('workspace_members')
-        .insert({ workspace_id: workspace.id, user_id: user.id, role: 'owner' });
-
-      if (memberError) {
-        console.error('workspace_members insert error:', memberError);
-        setError(memberError.message);
-      } else {
-        router.refresh();
-      }
+      setError(wsError);
+    } else {
+      router.refresh();
     }
 
     setCreating(false);
