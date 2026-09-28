@@ -17,6 +17,21 @@ export function WorkspaceSidebar({ workspaces, activeWorkspaceId }: WorkspaceSid
   const [creatingDoc, setCreatingDoc] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /** Ensures the signed-in auth user has a matching row in public.users.
+   *  Needed when the user signed up before the DB trigger existed. */
+  async function ensurePublicUser(user: { id: string; email: string | undefined; user_metadata: Record<string, string> }) {
+    const { error } = await supabase.from('users').upsert(
+      {
+        id: user.id,
+        email: user.email ?? '',
+        full_name: user.user_metadata?.full_name ?? null,
+        avatar_url: user.user_metadata?.avatar_url ?? null,
+      },
+      { onConflict: 'id' }
+    );
+    return error;
+  }
+
   async function createDocument() {
     if (!activeWorkspaceId) {
       setError('Create a workspace first before adding documents.');
@@ -34,6 +49,9 @@ export function WorkspaceSidebar({ workspaces, activeWorkspaceId }: WorkspaceSid
       setCreatingDoc(false);
       return;
     }
+
+    // Make sure the user row exists before inserting (FK constraint)
+    await ensurePublicUser(user as any);
 
     const { data, error: insertError } = await supabase
       .from('documents')
@@ -68,9 +86,18 @@ export function WorkspaceSidebar({ workspaces, activeWorkspaceId }: WorkspaceSid
       return;
     }
 
+    // Make sure the user row exists before inserting (FK constraint on owner_id)
+    const userErr = await ensurePublicUser(user as any);
+    if (userErr) {
+      console.error('ensurePublicUser error:', userErr);
+      setError(userErr.message);
+      setCreating(false);
+      return;
+    }
+
     const { data: workspace, error: wsError } = await supabase
       .from('workspaces')
-      .insert({ name: 'New Workspace', owner_id: user.id })
+      .insert({ name: 'My Workspace', owner_id: user.id })
       .select('id')
       .single();
 
