@@ -1,8 +1,15 @@
 import { redirect } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { CommandPalette } from '@/components/command-palette/CommandPalette';
-import { FileConverterDrawer } from '@/components/file-tools/FileConverterDrawer';
 import { WorkspaceSidebar } from '@/components/dashboard/WorkspaceSidebar';
+
+// FileConverterDrawer imports heic2any which uses `window` at module scope —
+// must be loaded client-side only to avoid SSR crashes.
+const FileConverterDrawer = dynamic(
+  () => import('@/components/file-tools/FileConverterDrawer').then((m) => m.FileConverterDrawer),
+  { ssr: false }
+);
 
 /**
  * Server Component: fetches the user's workspaces, pinned docs, and recent

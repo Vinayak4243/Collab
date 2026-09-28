@@ -1,9 +1,14 @@
 import { redirect, notFound } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { CollaborativeEditor } from '@/components/editor/CollaborativeEditor';
 import { CommandPalette } from '@/components/command-palette/CommandPalette';
-import { FileConverterDrawer } from '@/components/file-tools/FileConverterDrawer';
 import { DocumentTitleBar } from '@/components/editor/DocumentTitleBar';
+
+const FileConverterDrawer = dynamic(
+  () => import('@/components/file-tools/FileConverterDrawer').then((m) => m.FileConverterDrawer),
+  { ssr: false }
+);
 
 interface PageProps {
   params: { id: string };
