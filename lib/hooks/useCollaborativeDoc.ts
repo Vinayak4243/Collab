@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import * as Y from 'yjs';
-import { createClient as createLiveblocksClient } from '@liveblocks/client';
-import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 
 export interface CollaboratorPresence {
   name: string;
@@ -11,46 +9,60 @@ export interface CollaboratorPresence {
 }
 
 /**
- * Sets up one Yjs document per Claude document `id`, synced in real time via
- * Liveblocks' Yjs provider (WebSocket transport + presence/cursor awareness
- * handled for you). Swap `LiveblocksYjsProvider` for `y-webrtc`'s
- * WebrtcProvider if self-hosting instead of using Liveblocks — the rest of
- * this hook and the TipTap Collaboration extension stay identical either way.
+ * Sets up one Yjs document per document `id`, synced in real time via
+ * Liveblocks' Yjs provider when NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY is set.
+ * Falls back to a local-only Yjs doc when the key is missing so the editor
+ * still works (just without multi-user sync).
  *
- * @param documentId  the `documents.id` row this editor session is attached to
- * @param user        current user's identity, shown as a colored cursor to others
+ * To enable real-time collaboration:
+ *  1. Create a free account at https://liveblocks.io
+ *  2. Copy your Public API key (starts with pk_)
+ *  3. Add it to .env.local: NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_...
+ *  4. Also add your Secret key: LIVEBLOCKS_SECRET_KEY=sk_...
+ *  5. Restart the dev server
  */
 export function useCollaborativeDoc(documentId: string, user: CollaboratorPresence) {
   const [isSynced, setIsSynced] = useState(false);
 
+  const liveblocksKey = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
+  const isLiveblocksEnabled = Boolean(liveblocksKey);
+
   const { ydoc, provider } = useMemo(() => {
     const ydoc = new Y.Doc();
 
-    const client = createLiveblocksClient({
-      publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
-    });
+    if (!isLiveblocksEnabled) {
+      // No key — return a stub provider so the rest of the hook stays identical
+      return { ydoc, provider: null };
+    }
 
-    // Each document gets its own Liveblocks "room" so edits never leak
-    // between unrelated documents.
-    const { room } = client.enterRoom(`document-${documentId}`, {
-      initialPresence: { name: user.name, color: user.color },
-    });
+    // Dynamically import to avoid crashing when key is absent
+    const setupLiveblocks = async () => {
+      const { createClient: createLiveblocksClient } = await import('@liveblocks/client');
+      const { LiveblocksYjsProvider } = await import('@liveblocks/yjs');
 
-    const provider = new LiveblocksYjsProvider(room, ydoc);
+      const client = createLiveblocksClient({ publicApiKey: liveblocksKey! });
+      const { room } = client.enterRoom(`document-${documentId}`, {
+        initialPresence: { name: user.name, color: user.color },
+      });
+      const provider = new LiveblocksYjsProvider(room, ydoc);
+      setIsSynced(false);
+      provider.on('sync', (synced: boolean) => setIsSynced(synced));
+    };
 
-    return { ydoc, provider };
-  }, [documentId, user.name, user.color]);
+    setupLiveblocks();
+    return { ydoc, provider: null }; // provider set up async
+  }, [documentId, isLiveblocksEnabled, liveblocksKey, user.name, user.color]);
+
+  // When no Liveblocks, mark as "synced" immediately (local mode)
+  useEffect(() => {
+    if (!isLiveblocksEnabled) setIsSynced(true);
+  }, [isLiveblocksEnabled]);
 
   useEffect(() => {
-    const handleSync = (synced: boolean) => setIsSynced(synced);
-    provider.on('sync', handleSync);
-
     return () => {
-      provider.off('sync', handleSync);
-      provider.destroy();
       ydoc.destroy();
     };
-  }, [provider, ydoc]);
+  }, [ydoc]);
 
   return { ydoc, provider, isSynced };
 }
