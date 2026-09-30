@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, LayoutGrid, AlertCircle } from 'lucide-react';
+import { Plus, LayoutGrid, AlertCircle, LogOut } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { createWorkspaceAction } from '@/app/actions/workspace';
@@ -87,11 +87,10 @@ export function WorkspaceSidebar({ workspaces, activeWorkspaceId }: WorkspaceSid
           <a
             key={ws.id}
             href={`/dashboard?workspace=${ws.id}`}
-            className={`block rounded-lg px-2 py-1.5 text-sm ${
-              ws.id === activeWorkspaceId
-                ? 'bg-slate-100 font-medium text-slate-900'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
+            className={`block rounded-lg px-2 py-1.5 text-sm ${ws.id === activeWorkspaceId
+              ? 'bg-slate-100 font-medium text-slate-900'
+              : 'text-slate-600 hover:bg-slate-50'
+              }`}
           >
             {ws.name}
           </a>
@@ -112,6 +111,19 @@ export function WorkspaceSidebar({ workspaces, activeWorkspaceId }: WorkspaceSid
       >
         <Plus size={14} /> {creatingDoc ? 'Creating…' : 'New document'}
       </button>
+
+      <div className="mt-auto pt-4 border-t border-slate-100">
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut();
+            router.push('/sign-in');
+            router.refresh();
+          }}
+          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+        >
+          <LogOut size={14} /> Sign out
+        </button>
+      </div>
     </aside>
   );
 }

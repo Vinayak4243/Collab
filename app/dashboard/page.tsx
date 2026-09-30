@@ -16,7 +16,11 @@ const FileConverterDrawer = dynamic(
  * files directly from Postgres (RLS-scoped to the signed-in user) before
  * rendering — no client-side loading spinner for the initial view.
  */
-export default async function DashboardPage() {
+interface DashboardPageProps {
+  searchParams?: { workspace?: string };
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const supabase = createClient();
   const {
     data: { user },
@@ -30,7 +34,8 @@ export default async function DashboardPage() {
     .eq('user_id', user.id);
 
   const workspaces = memberships?.map((m: any) => m.workspaces).filter(Boolean) ?? [];
-  const activeWorkspaceId = workspaces[0]?.id;
+  const requestedWorkspace = workspaces.find((w: any) => w.id === searchParams?.workspace);
+  const activeWorkspaceId = requestedWorkspace?.id ?? workspaces[0]?.id;
 
   const { data: pinned } = activeWorkspaceId
     ? await supabase
